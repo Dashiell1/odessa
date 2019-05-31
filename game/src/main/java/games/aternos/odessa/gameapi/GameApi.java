@@ -1,6 +1,7 @@
 package games.aternos.odessa.gameapi;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import games.aternos.odessa.gameapi.eventhook.EventHookLoader;
 import games.aternos.odessa.gameapi.game.Game;
 import org.bukkit.plugin.java.JavaPlugin;
 
@@ -22,6 +23,7 @@ public class GameApi extends JavaPlugin {
   @Override
   public void onEnable() {
     gameApi = this;
+      EventHookLoader a = new EventHookLoader();
   }
 
   /**
@@ -29,21 +31,16 @@ public class GameApi extends JavaPlugin {
    * todo: more elegant multi game supporting thingy
    *
    * @param game The game.
-   * @throws Exception If a game is already registered.
    */
-  public void registerGame(@NonNull Game game) throws Exception {
+  public void registerGame(@NonNull Game game) {
 
     if (this.getGame() != null) {
-      throw new Exception("Game Already Registered");
+      Debug.$("A game is already registered..ignoring");
+      return;
     }
     this.setGame(game);
     this.getGame().initialize();
     Debug.$("Loading Game: " + this.getGame().getGameConfiguration().getGameName());
-  }
-
-  protected void unRegisterGame() { // terribly unsafe, should be removed in the future, but for tests currently.
-    this.getGame().uninitialize();
-    this.game = null;
   }
 
   public Game getGame() {

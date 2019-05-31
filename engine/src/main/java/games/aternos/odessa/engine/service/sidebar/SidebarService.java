@@ -15,11 +15,11 @@ public class SidebarService extends Service {
   /**
    * HashMap with Player Boards inside. Static to remain consistent across all instances and to therefore prevent errors.
    */
-  private static HashMap<Player, Scoreboard> playerBoards = new HashMap<>();
+  private static final HashMap<Player, Scoreboard> playerBoards = new HashMap<>();
   /**
    * Scoreboard Manager Instance. Generally from Bukkit#getScoreboardManager
    */
-  private ScoreboardManager scoreboardManager;
+  private final ScoreboardManager scoreboardManager;
 
   public SidebarService(GameApi gameApi, ScoreboardManager scoreboardManager) {
     super(gameApi);
@@ -28,10 +28,6 @@ public class SidebarService extends Service {
 
   private static HashMap<Player, Scoreboard> getPlayerBoards() {
     return playerBoards;
-  }
-
-  private static void setPlayerBoards(HashMap<Player, Scoreboard> playerBoards) {
-    SidebarService.playerBoards = playerBoards;
   }
 
   /**
@@ -77,14 +73,6 @@ public class SidebarService extends Service {
 
   private boolean isInPlayerBoards(Player p) {
     return playerBoards.keySet().contains(p);
-  }
-
-  private ScoreboardManager getScoreboardManager() {
-    return scoreboardManager;
-  }
-
-  private void setScoreboardManager(ScoreboardManager scoreboardManager) {
-    this.scoreboardManager = scoreboardManager;
   }
 
   private Scoreboard getPlayerScoreboard(Player p) {

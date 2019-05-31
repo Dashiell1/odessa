@@ -27,44 +27,77 @@ public class GameLobbySystem {
   private final GameApi gameApi;
   private final Game game;
   private final GameConfiguration gameConfiguration;
-  private final SidebarService sidebarService;
   private final LobbyBoard lobbyBoard;
-  private final IoConfigurationService ioConfigurationService;
   private final LobbyIoConfiguration lobbyIoConfiguration;
   private final PlayerService playerService;
   private final KitSelectionGUI kitSelectionGUI;
   private final GameArenaService gameArenaService;
-  private final HashMap<Arena, Integer> mapVote;
+  private final HashMap<Arena, Integer> arenaVote;
   private final ArenaVoteGUI arenaVoteGUI;
 
+
   private LobbyController lobbyController;
+  private LobbyState lobbyState;
+  private boolean active;
 
   public GameLobbySystem(@Nonnull GameLifecycleManager gameLifecycleManager, @Nonnull GameApi gameApi, @Nonnull GameConfiguration gameConfiguration) {
+    this.lobbyController = new LobbyController(this);
     this.gameLifecycleManager = gameLifecycleManager;
     this.gameApi = gameApi;
     game = gameApi.getGame();
     this.gameConfiguration = gameConfiguration;
-    this.sidebarService = new SidebarService(this.gameApi, Bukkit.getScoreboardManager());
-    this.lobbyBoard = new LobbyBoard(this.sidebarService, this);
-    this.lobbyController = new LobbyController(this);
-    this.ioConfigurationService = new IoConfigurationService(this.gameApi);
-    this.lobbyIoConfiguration = new LobbyIoConfiguration(this.ioConfigurationService);
+    SidebarService sidebarService = new SidebarService(this.gameApi, Bukkit.getScoreboardManager());
+    this.lobbyBoard = new LobbyBoard(sidebarService, this.getLobbyController());
+    IoConfigurationService ioConfigurationService = new IoConfigurationService(this.gameApi);
+    this.lobbyIoConfiguration = new LobbyIoConfiguration(ioConfigurationService);
     this.playerService = new PlayerService(this.gameApi);
-    this.kitSelectionGUI = new KitSelectionGUI(this);
-    this.gameArenaService = new GameArenaService(this.gameApi, this.ioConfigurationService, this.getGame().getGameConfiguration().getGameName());
-    this.mapVote = new HashMap<>();
+    this.kitSelectionGUI = new KitSelectionGUI(this.getLobbyController());
+    this.gameArenaService = new GameArenaService(this.gameApi, ioConfigurationService, this.getGame().getGameConfiguration().getGameName());
+    this.arenaVote = new HashMap<>();
     this.arenaVoteGUI = new ArenaVoteGUI(this);
   }
 
+  /**
+   * Starts the Lobby instance
+   */
   public void startLobby() {
+    this.active = true;
     this.getGame().getGameConfiguration().setGameArenas(this.gameArenaService.getArenas());
     this.getLobbyController().registerLobbyListeners();
     this.getLobbyController().registerLobbyCommands();
+    this.lobbyState = LobbyState.WAITINGFORPLAYERS;
   }
 
+  /**
+   * Stops the lobby
+   */
   public void stopLobby() {
-    this.getLobbyController().unRegisterLobbyListeners();
-    this.getLobbyController().unRegisterCommands();
+      this.getLobbyController().removeLobbyListeners();
+    this.active = false;
+  }
+
+  /**
+   * @return The Most voted lobby
+   */
+  public Arena computeArenaVoted(){
+    if(this.arenaVote.isEmpty()){
+      return this.getGame().getGameConfiguration().getGameArenas().get(0);
+    }
+
+    Arena mostVoted = null;
+    int mostVotes = 0;
+    for(Arena a : this.arenaVote.keySet()){
+      if(mostVoted == null){
+        mostVoted = a;
+        mostVotes = this.arenaVote.get(a);
+      }else{
+        if(this.arenaVote.get(a) > mostVotes){
+          mostVoted = a;
+          mostVotes = this.arenaVote.get(a);
+        }
+      }
+    }
+    return mostVoted;
   }
 
   public LobbyBoard getLobbyBoard() {
@@ -113,7 +146,19 @@ public class GameLobbySystem {
 
   public ArenaVoteGUI getArenaVoteGUI(){return this.arenaVoteGUI;}
 
-  public HashMap<Arena, Integer> getMapVote() {
-    return mapVote;
+  public HashMap<Arena, Integer> getArenaVote() {
+    return arenaVote;
+  }
+
+  public LobbyState getLobbyState() {
+    return lobbyState;
+  }
+
+  public void setLobbyState(LobbyState lobbyState) {
+    this.lobbyState = lobbyState;
+  }
+
+  public boolean isActive() {
+    return active;
   }
 }
